@@ -185,12 +185,12 @@ tap_dance_action_t tap_dance_actions[] = {
     SOFT_GUI = SAFE_RANGE,
 };*/
 
-const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
+/*const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
 
-const key_override_t **key_overrides = (const key_override_t *[]) {
+const key_override_t *key_overrides[] = {
     &shift_backspace_delete,
     NULL
-};
+};*/
 
 static bool alt_l_held = false;
 
@@ -203,7 +203,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
    switch (keycode){
 		case LT(_MOUSE,KC_BSPC):
-		//case LT(_SYM,KC_BSPC):
+		case LT(_SYM,KC_BSPC):
 			if(record->event.pressed && record->tap.count >0){
 				uint8_t mods = get_mods();
 				uint8_t weak_mods = get_weak_mods();
@@ -213,8 +213,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 					del_weak_mods(MOD_MASK_SHIFT);
 					del_oneshot_mods(MOD_MASK_SHIFT);
 					
-					register_code16(KC_DEL);
-                    unregister_code16(KC_DEL);
+					tap_code(KC_DEL);
 					
 					set_mods(mods);
 					set_weak_mods(weak_mods);
