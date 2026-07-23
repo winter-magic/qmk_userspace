@@ -5,6 +5,7 @@
 #include "keymap_german.h"
 #include "sendstring_german.h"
 #include "print.h"
+#include "process_key_override.h"
 
 #include "leader_key.h"
 
@@ -179,25 +180,17 @@ tap_dance_action_t tap_dance_actions[] = {
     [TD_TAB_ESC] = ACTION_TAP_DANCE_DOUBLE(KC_TAB, KC_ESC),
 };
 */
-enum {
+
+/*enum {
     SOFT_GUI = SAFE_RANGE,
+};*/
+
+const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
+
+const key_override_t **key_overrides = (const key_override_t *[]) {
+    &shift_backspace_delete,
+    NULL
 };
-
-static bool process_sym_hrm(keyrecord_t *record, uint16_t tap_key, uint8_t mod_bit) {
-    if (record->tap.count && record->event.pressed) {
-        tap_code16(tap_key);
-    } else if (!record->tap.count) {
-        if (record->event.pressed) {
-            register_mods(mod_bit);
-        } else {
-            unregister_mods(mod_bit);
-        }
-    }
-    return false;
-}
-
-static bool soft_gui_active = false;
-static uint8_t soft_gui_L_count = 0;
 
 static bool alt_l_held = false;
 
@@ -207,63 +200,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    // Soft-GUI wird durch den Mod-Tap aktiviert/deaktiviert
-    if (keycode == SOFT_GUI) {
-        if (record->event.pressed) {
-            soft_gui_active = true;
-            soft_gui_L_count = 0;  // wichtig: L-Zähler zurücksetzen
-        } else {
-            soft_gui_active = false;
-        }
-        return false;
-    }
-
-    // Wenn Soft-GUI aktiv:
-    if (soft_gui_active) {
-
-        // -------------------------
-        // Sonderfall: Win+L blockieren
-        // -------------------------
-        if (keycode == KC_L && record->event.pressed) {
-
-            soft_gui_L_count++;
-
-            // Nur das *erste* L blockieren
-            if (soft_gui_L_count == 1) {
-                tap_code(KC_A);
-                tap_code(KC_L);
-                return false;
-            }
-
-            // Ab dem zweiten L → NICHT blockieren
-            // einfach „L“ normal ausgeben
-            // (keine GUI gedrückt)
-            return true;
-        }
-
-        // -------------------------
-        // Andere Soft-GUI-Kombinationen → echtes Win+Key
-        // -------------------------
-        if (record->event.pressed) {
-            register_code(KC_LGUI);
-            register_code(keycode);
-        } else {
-            unregister_code(keycode);
-            unregister_code(KC_LGUI);
-        }
-
-        return false;
-    }
 
    switch (keycode){
-		case AUSRUFEZ_GUI:  return process_sym_hrm(record, DE_AUSRUFEZ, MOD_BIT(KC_LGUI));
-		case MAL_ALT:  return process_sym_hrm(record, DE_MAL,      MOD_BIT(KC_LALT));
-		case FSLASH_SFT:  return process_sym_hrm(record, DE_FSLASH,   MOD_BIT(KC_LSFT));
-		case EQUAL_CTL:  return process_sym_hrm(record, DE_EQUAL,    MOD_BIT(KC_LCTL));
-		case HASH_CTL: return process_sym_hrm(record, DE_HASH,     MOD_BIT(KC_RCTL));
-		case RKLAMMERL_SFT: return process_sym_hrm(record, DE_RKLAMMERL,MOD_BIT(KC_RSFT));
-		case RKLAMMERR_ALT: return process_sym_hrm(record, DE_RKLAMMERR,MOD_BIT(KC_LALT));
-		case BSLASH_GUI: return process_sym_hrm(record, DE_BSLASH,   MOD_BIT(KC_RGUI));
 		case LT(_MOUSE,KC_BSPC):
 		//case LT(_SYM,KC_BSPC):
 			if(record->event.pressed && record->tap.count >0){
@@ -322,21 +260,21 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	
 	[_BASE] = LAYOUT_ELORA_FORMAT(
-    KC_ESC ,KC_1             , KC_2       ,KC_3        , KC_4             ,  KC_5   ,                                                
-    KC_TAB ,DE_Q             ,DE_W        ,DE_E        , DE_R             ,  DE_T   ,                                                
-    _______,MT(SOFT_GUI,DE_A),LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
-    KC_LSFT,DE_Y             , DE_X       ,DE_C        , DE_V             ,  DE_B   , 
+    KC_ESC ,KC_1, KC_2       ,KC_3        , KC_4             ,  KC_5   ,                                                
+    KC_TAB ,DE_Q,DE_W        ,DE_E        , DE_R             ,  DE_T   ,                                                
+    KC_LGUI,DE_A,LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
+    KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
 	 
-                                                 KC_DEL  ,DE_DRUCK ,
-    RM_TOGG ,LT(_MOUSE,KC_BSPC),LT(_NUM,KC_DEL),NAV_ENTER,QK_LEAD  ,
+                                                 KC_DEL  ,DE_DRUCK ,  
+    RM_TOGG ,LT(_MOUSE,KC_BSPC),NAV_ENTER,LT(_NUM,KC_DEL),QK_LEAD  ,
 											
 	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
 	DE_Z     ,   DE_U     ,DE_I        ,DE_O  ,DE_P         , DE_UE ,										
 	DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),ALT_L ,RGUI_T(DE_OE), DE_AE ,
     DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
 	 
-	KC_INSERT      , KC_DEL  ,
-	LT(_CMD,KC_TAB),KC_SPACE ,LT(_SYM, KC_BSPC),_______ ,RM_TOGG									
+	KC_INSERT      , KC_DEL          ,
+	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
     ),
 
     [_NAV] = LAYOUT_ELORA_FORMAT(
@@ -379,7 +317,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_SYM] = LAYOUT_ELORA_FORMAT(  
     _______,_______     , _______  , _______    , _______     , _______  ,                                 
     _______,DE_SHKOMMA  ,DE_KLEINER,DE_GROESSER ,DE_MINUS     ,DE_ODER   ,                                 
-    _______,AUSRUFEZ_GUI,MAL_ALT   ,FSLASH_SFT  ,EQUAL_CTL    ,DE_UND    ,                                 
+    _______,DE_AUSRUFEZ ,DE_MAL    ,DE_FSLASH   ,DE_EQUAL     ,DE_UND    ,                                 
     _______,DE_TILDE    ,DE_PLUS   ,DE_EKLAMMERL,DE_EKLAMMERR ,DE_PROZENT,
 	
 									   _______,_______, 
@@ -387,7 +325,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 										 
 	_______      , _______     , _______     , _______  , _______     , _______,	
     DE_CIRCUMFLEX,DE_GKLAMMERL ,DE_GKLAMMERR , DE_DOLLAR, DE_EURO     , _______,	 
-	HASH_CTL     ,RKLAMMERL_SFT,RKLAMMERR_ALT,BSLASH_GUI,DE_CIRCLE    , _______,
+	DE_HASH      ,DE_RKLAMMERL ,DE_RKLAMMERR ,DE_BSLASH ,DE_CIRCLE    , _______,
 	DE_AT        , DE_DHKOMMA  , DE_COMM     , DE_DOT   , DE_PARAGRAPH, _______,
 	 
 	_______,_______,
