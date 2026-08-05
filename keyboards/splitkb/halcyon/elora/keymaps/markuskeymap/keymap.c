@@ -7,11 +7,12 @@
 #include "print.h"
 #include "process_key_override.h"
 
-#include "leader_key.h"
+#include "my_leader_key.h"
 
 
 enum layers {
     _BASE = 0,
+    _BASE_ALT,
     _NAV,
 	_MOUSE,
 	_SYM,
@@ -134,13 +135,9 @@ combo_t key_combos[] = {
 bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case LT(_SYM,KC_BSPC):
-            return true;   // ← HIER aktivieren
 		case LT(_NAV,KC_ENTER):
-            return true;   // ← HIER aktivieren
 		case LT(_MOUSE,KC_BSPC):
-            return true;   // ← HIER aktivieren
         case LT(_NUM, KC_DEL):
-            return true;
         case LT(_CMD,KC_TAB):
             return true;
         default:
@@ -264,7 +261,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LGUI,DE_A,LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
     KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
 	 
-                                                 KC_DEL  ,DE_DRUCK ,  
+                                           DF(_BASE_ALT) ,DE_DRUCK ,  
     RM_TOGG ,LT(_MOUSE,KC_BSPC),NAV_ENTER,LT(_NUM,KC_DEL),QK_LEAD  ,
 											
 	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
@@ -275,20 +272,38 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	KC_INSERT      , KC_DEL          ,
 	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
     ),
+    
+    [_BASE_ALT] = LAYOUT_ELORA_FORMAT(
+    KC_ESC ,KC_1, KC_2       ,KC_3        , KC_4             ,  KC_5   ,                                                
+    KC_TAB ,DE_Q,DE_W        ,DE_E        , DE_R             ,  DE_T   ,                                                
+    KC_LGUI,DE_A,LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
+    KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
+	 
+                                                 DF(_BASE),DE_DRUCK ,  
+    RM_TOGG ,LT(_MOUSE,KC_BSPC),LT(_NUM,KC_DEL),NAV_ENTER ,QK_LEAD  ,
+											
+	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
+	DE_Z     ,   DE_U     ,DE_I        ,DE_O  ,DE_P         , DE_UE ,										
+	DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),ALT_L ,RGUI_T(DE_OE), DE_AE ,
+    DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
+	 
+	KC_INSERT      , KC_DEL ,
+	LT(_CMD,KC_TAB),KC_SPACE,LT(_SYM, KC_BSPC),_______ ,RM_TOGG									
+    ),
 
     [_NAV] = LAYOUT_ELORA_FORMAT(
-    _______, _______, _______  , _______  , _______ , _______,                                       
-    _______, _______,_______   ,_______   ,_______  , _______,                                      
-    _______, KC_LGUI, KC_LALT  , KC_LSFT  , KC_LCTL , _______,                                       
-    _______, _______, _______  ,_______   ,_______  , _______,
+    _______, _______, _______  , _______   , _______   , _______   ,                                       
+    _______, _______,_______   ,LALT(KC_F8),LALT(KC_F7), _______   ,                                      
+    _______, KC_LGUI, KC_LALT  , KC_LSFT   , KC_LCTL   ,LSFT(KC_F6),                                       
+    _______, _______, _______  ,_______    ,_______    , _______   ,
 
 								  _______,_______  , 
     _______  , _______ , _______, _______, _______ , 
 								   
-	_______ , _______  , _______ , _______, _______, _______,							   
-	KC_PGUP , KC_HOME  , KC_UP   , KC_END , _______, _______,							   
-	KC_PGDN , KC_LEFT  , KC_DOWN , KC_RGHT, _______, _______,
-	_______ ,LCTL(DE_W), KC_BSPC , _______, _______, _______,
+	_______   , _______  , KC_PGUP , _______, _______, _______,							   
+	_______   , KC_HOME  , KC_UP   , KC_END , _______, _______,							   
+	LCTL(DE_W), KC_LEFT  , KC_DOWN , KC_RGHT, KC_F2  , _______,
+	_______   ,LCTL(DE_W), KC_PGDN , _______, _______, _______,
 	
 	_______  ,_______ ,
 	_______  ,_______ ,_______ , _______  , _______							   
@@ -369,10 +384,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
     
     [_CMD] = LAYOUT_ELORA_FORMAT(
-    _______, _______, _______    , _______  , _______  , _______  ,                                       
-    _______,RGUI(KC_1),RGUI(KC_2),RGUI(KC_3),RGUI(KC_4),RGUI(KC_5),                                  
-    _______,LALT(KC_0),LALT(KC_1),LALT(KC_8),LALT(KC_9),LALT(KC_5),                                       
-    _______, _______  , _______  , _______  , _______  , _______  , 
+    _______, _______, _______    , _______  , _______  , _______   ,                                       
+    _______,RGUI(KC_1),RGUI(KC_2),RGUI(KC_3),RGUI(KC_4),RGUI(KC_5) ,                                  
+    _______,LALT(KC_0),LALT(KC_1),LALT(KC_8),LALT(KC_9),LSFT(KC_F9),                                       
+    _______, _______  , _______  , _______  , _______  , _______   ,  
 	  
                                _______,_______  ,
     _______, _______, _______, _______, _______ , 
