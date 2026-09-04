@@ -9,6 +9,13 @@
  */
 
 #include "num_word.h"
+#include "keymap_german.h"
+
+#define DE_PLUS KC_RBRC
+#define DE_MINUS KC_SLSH
+#define DE_MAL LSFT(KC_RBRC)
+#define DE_FSLASH LSFT(KC_7)
+
 
 static bool num_word_on = false;
 
@@ -53,9 +60,8 @@ __attribute__((weak)) bool num_word_should_terminate(uint16_t keycode, keyrecord
         case KC_UNDS:
         case KC_EQL:
         case KC_SCLN:
-        case DE_DOT:
         case DE_COMM:
-        case DE_FSLASH.
+        case DE_FSLASH:
         case DE_MAL:
         case DE_MINUS:
         case DE_PLUS:
