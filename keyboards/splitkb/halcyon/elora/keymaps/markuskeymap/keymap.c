@@ -7,19 +7,9 @@
 #include "print.h"
 #include "process_key_override.h"
 
+#include "layers.h"
 #include "my_leader_key.h"
-
-
-enum layers {
-    _BASE = 0,
-    _BASE_ALT,
-    _NAV,
-	_MOUSE,
-	_SYM,
-	_NUM,
-	_FUN,
-    _CMD
-};
+#include "num_word.h"
 
 #define LAYOUT_ELORA_FORMAT( \
     L00, L01, L02, L03, L04, L05, \
@@ -87,18 +77,19 @@ enum layers {
 
 
 #define ALT_L LALT_T(DE_L)
-#define NAV_ENTER LT(_NAV, KC_ENTER)
+#define NAV_ENTER LT(_NAV, KC_ENTER) 
+#define NAV_ALT_ENTER LT(_NAV_ALT, KC_ENTER) 
+#define FUN_NUM_WORD LT(_FUN, KC_F24)
 
-#define AUSRUFEZ_GUI  LT(0, KC_F13)   
-#define MAL_ALT  LT(0, KC_F14)  
-#define FSLASH_SFT  LT(0, KC_F15)   
-#define EQUAL_CTL  LT(0, KC_F16)   
-#define HASH_CTL LT(0, KC_F17)   
-#define RKLAMMERL_SFT LT(0, KC_F18)
-#define RKLAMMERR_ALT LT(0, KC_F19)
-#define BSLASH_GUI LT(0, KC_F20)
-   
 
+const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
+    LAYOUT(
+        'L', 'L', 'L', 'L', 'L', 'L',                     'R', 'R', 'R', 'R', 'R', 'R', 
+		'L', 'L', 'L', 'L', 'L', 'L',                     'R', 'R', 'R', 'R', 'R', 'R', 
+        'L', 'L', 'L', 'L', 'L', 'L',                     'R', 'R', 'R', 'R', 'R', 'R', 
+        'L', 'L', 'L', 'L', 'L', 'L', '*', '*', '*', '*', 'R', 'R', 'R', 'R', 'R', 'R', 
+                       '*', '*', '*', '*', '*', '*', '*', '*', '*', '*'
+    );
 
 bool caps_word_press_user(uint16_t keycode) {
     switch (keycode) {
@@ -136,8 +127,10 @@ bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case LT(_SYM,KC_BSPC):
 		case LT(_NAV,KC_ENTER):
+        case LT(_NAV_ALT,KC_ENTER):
 		case LT(_MOUSE,KC_BSPC):
-        case LT(_NUM, KC_DEL):
+        case LT(_NUM, KC_ESC):
+        case LT(_FUN, KC_F24):
         case LT(_CMD,KC_TAB):
             return true;
         default:
@@ -149,45 +142,17 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_
     switch (keycode) {
         case LT(_SYM, KC_BSPC):
         case LT(_NAV, KC_ENTER):
+        case LT(_NAV_ALT,KC_ENTER):
         case LT(_MOUSE, KC_BSPC):
-        case LT(_NUM, KC_DEL):
+        case LT(_NUM, KC_ESC):
+        case LT(_FUN, KC_F24):
         case LT(_CMD,KC_TAB):
             return 0;  // Flow Tap deaktiviert → Hold möglich
         default:
             return FLOW_TAP_TERM;  // Für Homerow-Mods normal aktiv
     }
 }
-
-
-const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
-    LAYOUT(
-        'L', 'L', 'L', 'L', 'L', 'L',                     'R', 'R', 'R', 'R', 'R', 'R', 
-		'L', 'L', 'L', 'L', 'L', 'L',                     'R', 'R', 'R', 'R', 'R', 'R', 
-        'L', 'L', 'L', 'L', 'L', 'L',                     'R', 'R', 'R', 'R', 'R', 'R', 
-        'L', 'L', 'L', 'L', 'L', 'L', '*', '*', '*', '*', 'R', 'R', 'R', 'R', 'R', 'R', 
-                       '*', '*', '*', '*', '*', '*', '*', '*', '*', '*'
-    );
 	
-/*
-enum {
-    TD_TAB_ESC,
-};
-
-tap_dance_action_t tap_dance_actions[] = {
-    [TD_TAB_ESC] = ACTION_TAP_DANCE_DOUBLE(KC_TAB, KC_ESC),
-};
-*/
-
-/*enum {
-    SOFT_GUI = SAFE_RANGE,
-};*/
-
-/*const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
-
-const key_override_t *key_overrides[] = {
-    &shift_backspace_delete,
-    NULL
-};*/
 
 static bool alt_l_held = false;
 
@@ -196,9 +161,21 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	if (leader_sequence_active()) {
         return true;
     }
+    
+    if (!process_num_word(keycode, record)) {
+        return false;
+    }
 
 
    switch (keycode){
+        case LT(_NUM, KC_F24):
+        case LT(_FUN, KC_F24):
+            if (record->tap.count && record->event.pressed) {
+                // getappt -> Num Word an/aus togglen
+                toggle_num_word();
+                return false;
+            }
+            return true;
 		case LT(_MOUSE,KC_BSPC):
 		case LT(_SYM,KC_BSPC):
 			if(record->event.pressed && record->tap.count >0){
@@ -228,6 +205,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
 
         case NAV_ENTER:
+        case NAV_ALT_ENTER:
             if (record->event.pressed && alt_l_held) {
                 // Alt+Enter ausführen
                 register_mods(MOD_LALT);
@@ -262,7 +240,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
 	 
                                            DF(_BASE_ALT) ,DE_DRUCK ,  
-    RM_TOGG ,LT(_MOUSE,KC_BSPC),NAV_ENTER,LT(_NUM,KC_DEL),QK_LEAD  ,
+    RM_TOGG ,LT(_MOUSE,KC_BSPC),NAV_ENTER,LT(_NUM,KC_ESC),QK_LEAD  ,
 											
 	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
 	DE_Z     ,   DE_U     ,DE_I        ,DE_O  ,DE_P         , DE_UE ,										
@@ -279,16 +257,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LGUI,DE_A,LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
     KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
 	 
-                                                 DF(_BASE),DE_DRUCK ,  
-    RM_TOGG ,LT(_MOUSE,KC_BSPC),LT(_NUM,KC_DEL),NAV_ENTER ,QK_LEAD  ,
+                                               DF(_BASE)  ,DE_DRUCK ,  
+    RM_TOGG ,LT(_MOUSE,KC_BSPC),NAV_ALT_ENTER,FUN_NUM_WORD,QK_LEAD  ,
 											
 	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
 	DE_Z     ,   DE_U     ,DE_I        ,DE_O  ,DE_P         , DE_UE ,										
 	DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),ALT_L ,RGUI_T(DE_OE), DE_AE ,
     DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
 	 
-	KC_INSERT      , KC_DEL ,
-	LT(_CMD,KC_TAB),KC_SPACE,LT(_SYM, KC_BSPC),_______ ,RM_TOGG									
+	KC_INSERT      , KC_DEL          ,
+	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
     ),
 
     [_NAV] = LAYOUT_ELORA_FORMAT(
@@ -304,6 +282,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	_______   , KC_HOME  , KC_UP   , KC_END , _______, _______,							   
 	LCTL(DE_W), KC_LEFT  , KC_DOWN , KC_RGHT, KC_F2  , _______,
 	_______   ,LCTL(DE_W), KC_PGDN , _______, _______, _______,
+	
+	_______  ,_______ ,
+	_______  ,_______ ,_______ , _______  , _______							   
+    ),
+    
+    [_NAV_ALT] = LAYOUT_ELORA_FORMAT(
+    _______, _______, _______  , _______   , _______   , _______   ,                                       
+    _______, _______,_______   ,LALT(KC_F8),LALT(KC_F7), _______   ,                                      
+    _______, KC_LGUI, KC_LALT  , KC_LSFT   , KC_LCTL   ,LSFT(KC_F6),                                       
+    _______, _______, _______  ,_______    ,_______    , _______   ,
+
+								  _______,_______  , 
+    _______  , _______ , _______, _______, _______ , 
+								   
+	_______   , _______  , _______ , _______, _______, _______,							   
+	KC_HOME   , KC_PGDN  , KC_PGUP , KC_END , _______, _______,							   
+    KC_LEFT   , KC_DOWN  ,  KC_UP  , KC_RGHT, KC_F2  , _______,
+	_______   ,LCTL(DE_W), _______ , _______, _______, _______,
 	
 	_______  ,_______ ,
 	_______  ,_______ ,_______ , _______  , _______							   
@@ -356,9 +352,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     _______, _______ , _______ , _______, _______ ,
 								   
 	_______, _______, _______, _______, _______ , _______,
-	_______, DE_1   , DE_2   , DE_3   , _______ , _______,
+	DE_DOT , DE_1   , DE_2   , DE_3   , _______ , _______,
 	DE_0   , DE_4   , DE_5   , DE_6   , _______ , _______,
-	_______, DE_7   , DE_8   , DE_9   , _______ , _______,
+	DE_COMM, DE_7   , DE_8   , DE_9   , _______ , _______,
 	
 	_______  , _______,
 	 _______ , _______, _______, _______, _______
@@ -401,4 +397,26 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	_______  , _______, _______, _______, _______
 	
     ),
+    
 };
+
+/*
+enum {
+    TD_TAB_ESC,
+};
+
+tap_dance_action_t tap_dance_actions[] = {
+    [TD_TAB_ESC] = ACTION_TAP_DANCE_DOUBLE(KC_TAB, KC_ESC),
+};
+*/
+
+/*enum {
+    SOFT_GUI = SAFE_RANGE,
+};*/
+
+/*const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
+
+const key_override_t *key_overrides[] = {
+    &shift_backspace_delete,
+    NULL
+};*/
