@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elora Keymap – Übersicht</title>
+<style>
+  :root{
+    --bg: #12151a;
+    --panel: #1a1e25;
+    --key-bg: #20252d;
+    --key-border: #2c323c;
+    --text: #e7e9ee;
+    --text-dim: #7d8794;
+    --text-faint: #454c58;
+
+    --c-alpha: #5b8def;
+    --c-sym: #4fb477;
+    --c-mod: #8a94a6;
+    --c-lt: #b072e8;
+    --c-df: #e0a458;
+    --c-sys: #e2666b;
+    --c-nav: #3fb8c9;
+
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-key: "JetBrains Mono", "SF Mono", "Cascadia Mono", ui-monospace, Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    padding: 14px 10px 40px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1{
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 4px 4px 2px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle{
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: 0 4px 14px;
+    line-height: 1.4;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding: 2px 4px 10px;
+    margin-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex: 0 0 auto;
+    background: var(--panel);
+    border: 1px solid var(--key-border);
+    color: var(--text-dim);
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 7px 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s ease;
+  }
+  .tab.active{
+    background: var(--c-lt);
+    border-color: var(--c-lt);
+    color: #16121c;
+  }
+
+  .legend{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    background: var(--panel);
+    border: 1px solid var(--key-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 0.68rem;
+    color: var(--text-dim);
+  }
+  .legend-item{ display:flex; align-items:center; gap:5px; }
+  .swatch{ width:9px; height:9px; border-radius:3px; flex:0 0 auto; }
+
+  .layer-note{
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    background: var(--panel);
+    border-left: 3px solid var(--c-lt);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    line-height: 1.45;
+    display: none;
+  }
+  .layer-note.show{ display:block; }
+
+  .hand{
+    margin-bottom: 22px;
+  }
+  .hand-label{
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    font-weight: 700;
+    margin: 0 2px 8px;
+  }
+
+  .board{
+    position: relative;
+    margin: 0 auto;
+  }
+
+  .key{
+    position: absolute;
+    background: var(--key-bg);
+    border: 1px solid var(--key-border);
+    border-radius: 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 2px;
+    overflow: hidden;
+  }
+  .key::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height:3px;
+    background: var(--type-color, transparent);
+  }
+  .key .tap{
+    font-family: var(--font-key);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height:1.05;
+    text-align:center;
+    word-break: break-word;
+  }
+  .key .hold{
+    font-family: var(--font-ui);
+    font-size: 0.5rem;
+    color: var(--text-dim);
+    margin-top: 1px;
+    text-align:center;
+    line-height:1;
+  }
+
+  .key.trans{
+    border-style: dashed;
+    background: transparent;
+  }
+  .key.trans::before{ display:none; }
+  .key.trans .tap{
+    color: var(--text-faint);
+    font-size: 0.68rem;
+  }
+
+  .key.alpha{ --type-color: var(--c-alpha); }
+  .key.sym{ --type-color: var(--c-sym); }
+  .key.mod{ --type-color: var(--c-mod); }
+  .key.lt{ --type-color: var(--c-lt); }
+  .key.df{ --type-color: var(--c-df); }
+  .key.sys{ --type-color: var(--c-sys); }
+  .key.nav{ --type-color: var(--c-nav); }
+
+  footer{
+    font-size: 0.68rem;
+    color: var(--text-faint);
+    text-align:center;
+    margin-top: 26px;
+    line-height: 1.6;
+  }
+
+  @media (min-width: 640px){
+    body{ max-width: 640px; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Elora Keymap – Layer-Übersicht</h1>
+<p class="subtitle">Halcyon Elora · 62 Tasten · 9 Layer. Positionen 1:1 nach dem offiziellen QMK-Layout (info.json) der Elora rev2 – Daumencluster als echter Arc.</p>
+
+<div class="tabs" id="tabs"></div>
+
+<div class="legend">
+  <div class="legend-item"><span class="swatch" style="background:var(--c-alpha)"></span>Buchstabe/Zahl</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c-sym)"></span>Symbol</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c-mod)"></span>Modifier</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c-lt)"></span>Layer-Tap / Hold</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c-df)"></span>Standard-Layer wechseln</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c-sys)"></span>System / RGB / Leader</div>
+  <div class="legend-item"><span class="swatch" style="background:var(--c-nav)"></span>Navigation / Maus / F-Tasten</div>
+  <div class="legend-item"><span class="swatch" style="border:1px dashed var(--text-faint)"></span>Transparent (wie Basis)</div>
+</div>
+
+<div class="layer-note" id="layerNote"></div>
+
+<div class="hand">
+  <div class="hand-label">Linke Hand</div>
+  <div class="board" id="boardLeft"></div>
+</div>
+
+<div class="hand">
+  <div class="hand-label">Rechte Hand</div>
+  <div class="board" id="boardRight"></div>
+</div>
+
+<footer>
+  Home-Row-Mods zeigen Tap-Buchstabe groß, Hold-Funktion klein darunter.<br>
+  Kombis (nicht in der Grafik): DE_Y+DE_X → Ausschneiden · DE_X+DE_C → Kopieren · DE_C+DE_V → Einfügen
+</footer>
+
+<script>
+function K(tap, hold, type){ return {tap, hold: hold||null, type}; }
+function T(){ return {tap:'·', hold:null, type:'trans'}; }
+
+// ---------------------------------------------------------------
+// PHYSICAL POSITIONS — taken 1:1 from the official splitkb Elora
+// rev2 info.json (LAYOUT_split_4x6_5), so the thumb arc and
+// columnar stagger match the real board instead of a guess.
+// Units are keyboard-units (1u); rendering multiplies by UNIT px.
+// ---------------------------------------------------------------
+const LEFT_POS = [
+  // row 0
+  {x:0,y:0.75},{x:1,y:0.75},{x:2,y:0.25},{x:3,y:0},{x:4,y:0.25},{x:5,y:0.5},
+  // row 1
+  {x:0,y:1.75},{x:1,y:1.75},{x:2,y:1.25},{x:3,y:1},{x:4,y:1.25},{x:5,y:1.5},
+  // row 2
+  {x:0,y:2.75},{x:1,y:2.75},{x:2,y:2.25},{x:3,y:2},{x:4,y:2.25},{x:5,y:2.5},
+  // row 3
+  {x:0,y:3.75},{x:1,y:3.75},{x:2,y:3.25},{x:3,y:3},{x:4,y:3.25},{x:5,y:3.5},
+  // bridge keys ML0, ML1
+  {x:6,y:4.0},{x:7,y:4.25},
+  // thumb arc LT0..LT4
+  {x:2.5,y:4.25},{x:3.5,y:4.25},{x:4.5,y:4.5},{x:5.5,y:5.0},{x:6.5,y:5.25},
+];
+
+const RIGHT_POS = [
+  // row 0
+  {x:2,y:0.5},{x:3,y:0.25},{x:4,y:0},{x:5,y:0.25},{x:6,y:0.75},{x:7,y:0.75},
+  // row 1
+  {x:2,y:1.5},{x:3,y:1.25},{x:4,y:1},{x:5,y:1.25},{x:6,y:1.75},{x:7,y:1.75},
+  // row 2
+  {x:2,y:2.5},{x:3,y:2.25},{x:4,y:2},{x:5,y:2.25},{x:6,y:2.75},{x:7,y:2.75},
+  // row 3
+  {x:2,y:3.5},{x:3,y:3.25},{x:4,y:3},{x:5,y:3.25},{x:6,y:3.75},{x:7,y:3.75},
+  // bridge keys MR0, MR1
+  {x:0,y:4.25},{x:1,y:4.0},
+  // thumb arc RT0..RT4
+  {x:0.5,y:5.25},{x:1.5,y:5.0},{x:2.5,y:4.5},{x:3.5,y:4.25},{x:4.5,y:4.25},
+];
+
+// ---------- key label data (unchanged content, per layer) ----------
+function baseLeftRows(altVariant){
+  return [
+    K('Esc'), K('1'), K('2'), K('3'), K('4'), K('5'),
+    K('⇥','Tab'), K('Q'), K('W'), K('E'), K('R'), K('T'),
+    K('Win'), K('A'), K('S','Alt','mod'), K('D','Umsch','mod'), K('F','Strg','mod'), K('G'),
+    K('Umsch'), K('Y'), K('X'), K('C'), K('V'), K('B'),
+  ].map(k => ({...k, type: k.type || 'alpha'}));
+}
+function baseLeftMid(altVariant){
+  return altVariant
+    ? [K('Basis→Std','','df'), K('Druck','','sys')]
+    : [K('Basis→Alt','','df'), K('Druck','','sys')];
+}
+function baseLeftThumb(altVariant){
+  return [
+    K('RGB','','sys'),
+    K('⌫','Maus','lt'),
+    altVariant ? K('⏎','NavAlt','lt') : K('⏎','Nav','lt'),
+    altVariant ? K('NumWord*','Fun','lt') : K('Esc','Zahl','lt'),
+    K('Leader','','sys'),
+  ];
+}
+function baseRightRows(){
+  return [
+    K('6'), K('7'), K('8'), K('9'), K('0'), K('ß'),
+    K('Z'), K('U'), K('I'), K('O'), K('P'), K('Ü'),
+    K('H'), K('J','Strg','mod'), K('K','Umsch','mod'), K('L','Alt','mod'), K('Ö','Win','mod'), K('Ä'),
+    K('N'), K('M'), K(','), K('.'), K('-'), K('Umsch'),
+  ].map(k => ({...k, type: k.type || 'alpha'}));
+}
+function baseRightMid(){
+  return [K('Ins','','sys'), K('Del','','sys')];
+}
+function baseRightThumb(){
+  return [
+    K('⇥','Cmd','lt'),
+    K('⌫','Sym','lt'),
+    K('␣','','alpha'),
+    K('Fun','','lt'),
+    K('RGB','','sys'),
+  ];
+}
+
+const trans24 = () => Array.from({length:24}, T);
+const trans2 = () => [T(),T()];
+const trans5 = () => [T(),T(),T(),T(),T()];
+
+const layers = {
+
+  "BASE": {
+    note: "Standard-Layer. Homerow-Mods auf S/D/F (links) und J/K/L/Ö (rechts). Shift+Backspace (Sym/Maus-Taste) sendet Delete statt Backspace.",
+    left: [...baseLeftRows(false), ...baseLeftMid(false), ...baseLeftThumb(false)],
+    right: [...baseRightRows(), ...baseRightMid(), ...baseRightThumb()],
+  },
+
+  "BASE_ALT": {
+    note: "Alternativer Basis-Layer (per DF dauerhaft aktiviert). Fast identisch zu BASE – nur Enter/Nav-Taste ruft NavAlt statt Nav auf, und die Zahl-Taste ist durch Fun/NumWord-Toggle ersetzt.",
+    left: [...baseLeftRows(true), ...baseLeftMid(true), ...baseLeftThumb(true)],
+    right: [...baseRightRows(), ...baseRightMid(), ...baseRightThumb()],
+  },
+
+  "NAV": {
+    note: "Aktiv beim Halten der Enter-Taste (linker Daumen). Pfeile + Seiten-Navigation rechts, Fenster-Shortcuts oben links.",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),T(),K('Alt+F8','','nav'),K('Alt+F7','','nav'),T(),
+      T(),K('Win','','mod'),K('Alt','','mod'),K('Umsch','','mod'),K('Strg','','mod'),K('Umsch+F6','','nav'),
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: [
+      T(),T(),K('PgUp','','nav'),T(),T(),T(),
+      T(),K('Home','','nav'),K('↑','','nav'),K('End','','nav'),T(),T(),
+      K('Strg+W','','nav'),K('←','','nav'),K('↓','','nav'),K('→','','nav'),K('F2','','nav'),T(),
+      T(),K('Strg+W','','nav'),K('PgDn','','nav'),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+  },
+
+  "NAV_ALT": {
+    note: "Zweite Navigations-Variante (über den Alt-Basis-Layer erreichbar). Pfeile in anderer Anordnung, ohne PgUp/PgDn oben rechts.",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),T(),K('Alt+F8','','nav'),K('Alt+F7','','nav'),T(),
+      T(),K('Win','','mod'),K('Alt','','mod'),K('Umsch','','mod'),K('Strg','','mod'),K('Umsch+F6','','nav'),
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: [
+      T(),T(),T(),T(),T(),T(),
+      K('Home','','nav'),K('PgDn','','nav'),K('PgUp','','nav'),K('End','','nav'),T(),T(),
+      K('←','','nav'),K('↓','','nav'),K('↑','','nav'),K('→','','nav'),K('F2','','nav'),T(),
+      T(),K('Strg+W','','nav'),T(),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+  },
+
+  "MOUSE": {
+    note: "Aktiv beim Halten der Backspace/Maus-Taste (linker Daumen). Mausbewegung + Klicks rechts, RGB/Tapping-Term-Einstellungen links.",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),T(),K('RGB weiter','','sys'),K('TapTerm+','','sys'),T(),
+      T(),K('Win','','mod'),K('Alt','','mod'),K('Umsch','','mod'),K('Strg','','mod'),K('TapTerm Info','','sys'),
+      T(),T(),T(),K('RGB zurück','','sys'),K('TapTerm−','','sys'),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: [
+      T(),K('Speed 1','','nav'),K('Speed 2','','nav'),K('Speed 3','','nav'),T(),T(),
+      K('Scroll ↑','','nav'),K('Klick L','','nav'),K('M ↑','','nav'),K('Klick R','','nav'),T(),T(),
+      K('Scroll ↓','','nav'),K('M ←','','nav'),K('M ↓','','nav'),K('M →','','nav'),K('Klick M','','nav'),T(),
+      T(),K('Strg+V','','sys'),K('Strg+C','','sys'),K('Strg+X','','sys'),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+  },
+
+  "SYM": {
+    note: "Aktiv beim Halten der Backspace/Sym-Taste (rechter Daumen). Alle Sonderzeichen für Programmierung & Formatierung.",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),K('\'','','sym'),K('<','','sym'),K('>','','sym'),K('-','','sym'),K('|','','sym'),
+      T(),K('!','','sym'),K('*','','sym'),K('/','','sym'),K('=','','sym'),K('&','','sym'),
+      T(),K('~','','sym'),K('+','','sym'),K('[','','sym'),K(']','','sym'),K('%','','sym'),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: [
+      T(),T(),T(),T(),T(),T(),
+      K('^','','sym'),K('{','','sym'),K('}','','sym'),K('$','','sym'),K('€','','sym'),T(),
+      K('#','','sym'),K('(','','sym'),K(')','','sym'),K('\\','','sym'),K('°','','sym'),T(),
+      K('@','','sym'),K('"','','sym'),K(',','','sym'),K('.','','sym'),K('§','','sym'),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+  },
+
+  "NUM": {
+    note: "Aktiv beim Halten der Esc-Taste (linker Daumen, tippen togglet stattdessen NumWord). Ziffernblock rechts, Grundrechenzeichen links.",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),K('/','','sym'),K('*','','sym'),K('-','','sym'),K('+','','sym'),T(),
+      T(),K('Win','','mod'),K('Alt','','mod'),K('Umsch','','mod'),K('Strg','','mod'),T(),
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: [
+      T(),T(),T(),T(),T(),T(),
+      K('.','','sym'),K('1','','alpha'),K('2','','alpha'),K('3','','alpha'),T(),T(),
+      K('0','','alpha'),K('4','','alpha'),K('5','','alpha'),K('6','','alpha'),T(),T(),
+      K(',','','sym'),K('7','','alpha'),K('8','','alpha'),K('9','','alpha'),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+  },
+
+  "FUN": {
+    note: "Aktiv beim Halten der Fun-Taste (rechter Daumen). Alle F-Tasten rechts.",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),T(),T(),T(),T(),
+      T(),K('Win','','mod'),K('Alt','','mod'),K('Umsch','','mod'),K('Strg','','mod'),T(),
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: [
+      T(),T(),T(),T(),T(),T(),
+      K('F12','','nav'),K('F1','','nav'),K('F2','','nav'),K('F3','','nav'),T(),T(),
+      K('F11','','nav'),K('F4','','nav'),K('F5','','nav'),K('F6','','nav'),T(),T(),
+      K('F10','','nav'),K('F7','','nav'),K('F8','','nav'),K('F9','','nav'),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+  },
+
+  "CMD": {
+    note: "Zusatz-Layer für Fensterverwaltung/Workspaces (im Code nicht mit den anderen Layern verknüpft – zur Vollständigkeit mit aufgeführt).",
+    left: [
+      T(),T(),T(),T(),T(),T(),
+      T(),K('Win+1','','nav'),K('Win+2','','nav'),K('Win+3','','nav'),K('Win+4','','nav'),K('Win+5','','nav'),
+      T(),K('Alt+0','','nav'),K('Alt+1','','nav'),K('Alt+8','','nav'),K('Alt+9','','nav'),K('Umsch+F9','','nav'),
+      T(),T(),T(),T(),T(),T(),
+      T(),T(),
+      T(),T(),T(),T(),T(),
+    ],
+    right: trans24().concat(trans2(), trans5()),
+  },
+};
+
+// ---------- rendering ----------
+const UNIT = 42; // px per keyboard-unit
+const KEY = 38;  // key box size in px
+
+const tabsEl = document.getElementById('tabs');
+const boardLeft = document.getElementById('boardLeft');
+const boardRight = document.getElementById('boardRight');
+const layerNote = document.getElementById('layerNote');
+
+function buildBoard(container, positions, keys){
+  container.innerHTML = '';
+  let maxX = 0, maxY = 0;
+  positions.forEach(p => { maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+  container.style.width = ((maxX) * UNIT + KEY + 4) + 'px';
+  container.style.height = ((maxY) * UNIT + KEY + 4) + 'px';
+
+  positions.forEach((p, i) => {
+    const k = keys[i];
+    const div = document.createElement('div');
+    div.className = 'key ' + k.type;
+    div.style.left = (p.x * UNIT) + 'px';
+    div.style.top = (p.y * UNIT) + 'px';
+    div.style.width = KEY + 'px';
+    div.style.height = KEY + 'px';
+
+    const tap = document.createElement('div');
+    tap.className = 'tap';
+    tap.textContent = k.tap;
+    div.appendChild(tap);
+    if(k.hold){
+      const hold = document.createElement('div');
+      hold.className = 'hold';
+      hold.textContent = k.hold;
+      div.appendChild(hold);
+    }
+    container.appendChild(div);
+  });
+}
+
+function render(name){
+  const L = layers[name];
+  buildBoard(boardLeft, LEFT_POS, L.left);
+  buildBoard(boardRight, RIGHT_POS, L.right);
+
+  if(L.note){
+    layerNote.textContent = L.note;
+    layerNote.classList.add('show');
+  } else {
+    layerNote.classList.remove('show');
+  }
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.layer === name);
+  });
+}
+
+Object.keys(layers).forEach((name, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (i === 0 ? ' active' : '');
+  btn.textContent = name.replace('_', ' ');
+  btn.dataset.layer = name;
+  btn.addEventListener('click', () => render(name));
+  tabsEl.appendChild(btn);
+});
+
+render(Object.keys(layers)[0]);
+</script>
+</body>
+</html>

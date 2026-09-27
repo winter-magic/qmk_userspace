@@ -47,20 +47,19 @@ void toggle_num_word(void) {
 // keymap by defining your own num_word_should_terminate() - just
 // don't mark it `weak` there, and remove/rename this one if you do.
 __attribute__((weak)) bool num_word_should_terminate(uint16_t keycode, keyrecord_t *record) {
+    // Reine Modifier-Tasten (Shift, Ctrl, Alt, GUI) beenden Num Word nie,
+    // egal ob einzeln oder als Teil einer Mod-Tap-Kombination gehalten.
+    if (IS_MODIFIER_KEYCODE(keycode)) {
+        return false;
+    }
+    
     switch (keycode) {
         // Top-row and shifted-top-row numbers
         case KC_1 ... KC_0:
-        // Numpad
-        case KC_P1 ... KC_P0:
-        case KC_PSLS ... KC_PPLS:
-        case KC_PDOT:
         // Common "stays in a number" punctuation
-        case KC_DOT:
-        case KC_MINS:
-        case KC_UNDS:
-        case KC_EQL:
-        case KC_SCLN:
+        case DE_DOT:
         case DE_COMM:
+        
         case DE_FSLASH:
         case DE_MAL:
         case DE_MINUS:
@@ -81,29 +80,36 @@ bool process_num_word(uint16_t keycode, keyrecord_t *record) {
     if (!num_word_on) {
         return true;
     }
-
     if (record->event.pressed) {
-        // Resolve mod-tap / layer-tap / tap-dance keys to their tapped
-        // keycode so e.g. LT(1, KC_1) is treated as KC_1.
         switch (keycode) {
-            case QK_MOD_TAP ... QK_MOD_TAP_MAX:
             case QK_LAYER_TAP ... QK_LAYER_TAP_MAX:
-            case QK_TAP_DANCE ... QK_TAP_DANCE_MAX:
 #ifndef NO_ACTION_TAPPING
                 if (record->tap.count == 0) {
-                    return true; // held, not tapped - let it through
+                    // Taste wird nur als Layer-Halte-Taste genutzt ->
+                    // echter Layerwechsel -> Num Word beenden.
+                    disable_num_word();
+                    return true;
                 }
 #endif
                 keycode = keycode & 0xFF;
                 break;
+
+            case QK_MOD_TAP ... QK_MOD_TAP_MAX:
+            case QK_TAP_DANCE ... QK_TAP_DANCE_MAX:
+#ifndef NO_ACTION_TAPPING
+                if (record->tap.count == 0) {
+                    return true; // gehalten (Modifier) -> durchlassen
+                }
+#endif
+                keycode = keycode & 0xFF;
+                break;
+
             default:
                 break;
         }
-
         if (num_word_should_terminate(keycode, record)) {
             disable_num_word();
         }
     }
-
     return true;
 }

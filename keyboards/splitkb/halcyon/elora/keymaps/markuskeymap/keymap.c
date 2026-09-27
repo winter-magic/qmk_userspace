@@ -73,9 +73,6 @@
 #define DE_CIRCUMFLEX KC_GRV
 #define DE_TILDE RALT(KC_RBRC)
 
-#define LAYERLOCK QK_LAYER_LOCK
-
-
 #define ALT_L LALT_T(DE_L)
 #define NAV_ENTER LT(_NAV, KC_ENTER) 
 #define NAV_ALT_ENTER LT(_NAV_ALT, KC_ENTER) 
@@ -168,7 +165,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 
    switch (keycode){
-        case LT(_NUM, KC_F24):
+        case LT(_NUM, KC_ESC):
         case LT(_FUN, KC_F24):
             if (record->tap.count && record->event.pressed) {
                 // getappt -> Num Word an/aus togglen
@@ -225,9 +222,6 @@ bool leader_add_user(uint16_t keycode) {
     return my_leader_add_user(keycode);
 }
 
-layer_state_t layer_state_set_user(layer_state_t state) {
-    return update_tri_layer_state(state, _SYM, _NUM, _FUN);
-}
 
 
 // clang-format off
@@ -248,7 +242,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
 	 
 	KC_INSERT      , KC_DEL          ,
-	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
+	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,MO(_FUN) ,RM_TOGG									
     ),
     
     [_BASE_ALT] = LAYOUT_ELORA_FORMAT(
@@ -266,7 +260,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
 	 
 	KC_INSERT      , KC_DEL          ,
-	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
+	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,MO(_FUN) ,RM_TOGG									
     ),
 
     [_NAV] = LAYOUT_ELORA_FORMAT(
@@ -408,13 +402,17 @@ enum {
 tap_dance_action_t tap_dance_actions[] = {
     [TD_TAB_ESC] = ACTION_TAP_DANCE_DOUBLE(KC_TAB, KC_ESC),
 };
-*/
 
-/*enum {
+layer_state_t layer_state_set_user(layer_state_t state) {
+    return update_tri_layer_state(state, _SYM, _NUM, _FUN);
+}
+
+
+enum {
     SOFT_GUI = SAFE_RANGE,
-};*/
+};
 
-/*const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
+const key_override_t shift_backspace_delete = ko_make_basic(MOD_MASK_SHIFT, LT(_SYM,KC_BSPC), KC_DEL);
 
 const key_override_t *key_overrides[] = {
     &shift_backspace_delete,
