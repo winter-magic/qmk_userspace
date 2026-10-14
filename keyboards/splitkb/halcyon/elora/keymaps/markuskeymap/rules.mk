@@ -10,3 +10,4 @@ TRI_LAYER_ENABLE = yes
 
 SRC += my_leader_key.c
 SRC += num_word.c
+SRC += nav_word.c
