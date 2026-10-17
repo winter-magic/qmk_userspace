@@ -53,6 +53,7 @@ __attribute__((weak)) bool nav_word_should_terminate(uint16_t keycode, keyrecord
     switch (keycode) {
         case KC_A ... KC_SLASH: // Buchstaben, Ziffern, Esc, Enter, Tab, Space, Satzzeichen
         case KC_NUBS:           // < > |
+        case KC_F23:
             return true;
         default:
             return false;

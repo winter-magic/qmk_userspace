@@ -106,18 +106,20 @@ bool caps_word_press_user(uint16_t keycode) {
             return false;  // Deactivate Caps Word.
     }
 }
-enum combos { COMBO_CUT, COMBO_COPY, COMBO_PASTE, COMBO_NAV };
+enum combos { COMBO_CUT, COMBO_COPY, COMBO_PASTE, COMBO_NAV, COMBO_LEADER };
 
 const uint16_t PROGMEM cut[]       = {DE_Y, DE_X, COMBO_END};
 const uint16_t PROGMEM copy[]      = {DE_X, DE_C, COMBO_END};
 const uint16_t PROGMEM paste[]     = {DE_C, DE_V, COMBO_END};
 const uint16_t PROGMEM nav_combo[] = {DE_G, DE_H, COMBO_END};
+const uint16_t PROGMEM leader[]    = {DE_T, DE_Z, COMBO_END};
 
 combo_t key_combos[] = {
     [COMBO_CUT]   = COMBO(cut,   LCTL(DE_X)),
     [COMBO_COPY]  = COMBO(copy,  LCTL(DE_C)),
     [COMBO_PASTE] = COMBO(paste, LCTL(DE_V)),
     [COMBO_NAV]   = COMBO_ACTION(nav_combo),
+    [COMBO_LEADER]= COMBO(leader, QK_LEAD),
 };
 
 void process_combo_event(uint16_t combo_index, bool pressed) {
@@ -169,13 +171,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
     
+    if (!process_nav_word(keycode, record)) {
+        return false;
+    }
+    
     if (!process_num_word(keycode, record)) {
         return false;
     }
 
 
    switch (keycode){
-        case LT(_NUM, KC_ESC):
         case LT(_FUN, KC_F24):
             if (record->tap.count && record->event.pressed) {
                 // getappt -> Num Word an/aus togglen
@@ -244,7 +249,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
 	 
                                                _______  ,DE_DRUCK ,
-    RM_TOGG ,LT(_MOUSE,KC_BSPC),KC_ENTER   ,FUN_NUM_WORD,QK_LEAD  ,
+    RM_TOGG ,LT(_MOUSE,KC_BSPC),KC_ENTER   ,FUN_NUM_WORD,KC_ESC   ,
 											
 	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
 	DE_Z     ,   DE_U     ,DE_I        ,DE_O  ,DE_P         , DE_UE ,										
@@ -252,7 +257,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
 	 
 	KC_INSERT      , KC_DEL          ,
-	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,MO(_FUN) ,RM_TOGG									
+	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
     ),
     
     [_NAV] = LAYOUT_ELORA_FORMAT(
@@ -266,7 +271,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 								   
 	_______   , _______  , _______ , _______, _______, _______,							   
 	KC_HOME   , KC_PGDN  , KC_PGUP , KC_END , _______, _______,							   
-    KC_LEFT   , KC_DOWN  ,  KC_UP  , KC_RGHT, KC_F2  , _______,
+    KC_LEFT   , KC_DOWN  ,  KC_UP  , KC_RGHT, KC_F23 , _______,
 	_______   ,LCTL(DE_W), _______ , _______, _______, _______,
 	
 	_______  ,_______ ,
@@ -321,7 +326,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 								   
 	_______, _______, _______, _______, _______ , _______,
 	DE_DOT , DE_1   , DE_2   , DE_3   , _______ , _______,
-	DE_0   , DE_4   , DE_5   , DE_6   , _______ , _______,
+	DE_0   , DE_4   , DE_5   , DE_6   , KC_F23  , _______,
 	DE_COMM, DE_7   , DE_8   , DE_9   , _______ , _______,
 	
 	_______  , _______,
