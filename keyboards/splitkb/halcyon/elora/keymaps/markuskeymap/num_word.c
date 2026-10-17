@@ -57,8 +57,13 @@ __attribute__((weak)) bool num_word_should_terminate(uint16_t keycode, keyrecord
         // Top-row and shifted-top-row numbers
         case KC_1 ... KC_0:
         // Common "stays in a number" punctuation
-        case DE_DOT:
+        case LT(0,KC_8):
         case DE_COMM:
+        case LSFT(DE_COMM):
+
+        case LT(0,KC_9):
+        case DE_DOT:
+        case LSFT(DE_DOT):
         
         case DE_FSLASH:
         case DE_MAL:
@@ -83,16 +88,16 @@ bool process_num_word(uint16_t keycode, keyrecord_t *record) {
     if (record->event.pressed) {
         switch (keycode) {
             case QK_LAYER_TAP ... QK_LAYER_TAP_MAX:
-#ifndef NO_ACTION_TAPPING
-                if (record->tap.count == 0) {
-                    // Taste wird nur als Layer-Halte-Taste genutzt ->
-                    // echter Layerwechsel -> Num Word beenden.
-                    disable_num_word();
-                    return true;
-                }
-#endif
-                keycode = keycode & 0xFF;
-                break;
+                #ifndef NO_ACTION_TAPPING
+                    if (record->tap.count == 0) {
+                        if (QK_LAYER_TAP_GET_LAYER(keycode) != 0) {
+                            disable_num_word();
+                        }
+                        return true;
+                    }
+                #endif
+                    keycode = keycode & 0xFF;
+                    break;
 
             case QK_MOD_TAP ... QK_MOD_TAP_MAX:
             case QK_TAP_DANCE ... QK_TAP_DANCE_MAX:

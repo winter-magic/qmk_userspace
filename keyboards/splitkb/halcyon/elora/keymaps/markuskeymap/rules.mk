@@ -6,7 +6,7 @@ REPEAT_KEY_ENABLE = yes
 CONSOLE_ENABLE = yes
 DYNAMIC_TAPPING_TERM_ENABLE  = yes
 TRI_LAYER_ENABLE = yes
-#KEY_OVERRIDE_ENABLE = yes
+KEY_OVERRIDE_ENABLE = yes
 
 SRC += my_leader_key.c
 SRC += num_word.c

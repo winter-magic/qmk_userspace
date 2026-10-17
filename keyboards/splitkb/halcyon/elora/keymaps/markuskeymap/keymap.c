@@ -75,8 +75,9 @@
 #define DE_CIRCUMFLEX KC_GRV
 #define DE_TILDE RALT(KC_RBRC)
 
-#define ALT_L LALT_T(DE_L)
 #define FUN_NUM_WORD LT(_FUN, KC_F24)
+#define KC_8_COMM LT(0, KC_8)
+#define KC_9_DOT LT(0, KC_9)
 
 
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
@@ -122,6 +123,14 @@ combo_t key_combos[] = {
     [COMBO_LEADER]= COMBO(leader, QK_LEAD),
 };
 
+const key_override_t shift_4_j = ko_make_basic(MOD_MASK_SHIFT, KC_4, KC_J);
+const key_override_t shift_5_k = ko_make_basic(MOD_MASK_SHIFT, KC_5, KC_K);
+
+const key_override_t *key_overrides[] = {
+    &shift_4_j,
+    &shift_5_k
+};
+
 void process_combo_event(uint16_t combo_index, bool pressed) {
     if (combo_index == COMBO_NAV && pressed) {
         toggle_nav_word();
@@ -154,16 +163,17 @@ uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_
         default:
             return FLOW_TAP_TERM;  // Für Homerow-Mods normal aktiv
     }
-}
+}	
 
-bool get_chordal_hold(uint16_t tap_hold_keycode, keyrecord_t *tap_hold_record,
-                      uint16_t other_keycode, keyrecord_t *other_record) {
-    //if (nav_word_is_nav_key(tap_hold_keycode)) return false;
-    return get_chordal_hold_default(tap_hold_record, other_record);
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case KC_8_COMM:
+        case KC_9_DOT:
+            return 150;
+        default:
+            return TAPPING_TERM;
+    }
 }
-	
-
-static bool alt_l_held = false;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
@@ -181,6 +191,28 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 
    switch (keycode){
+        case KC_8_COMM:
+            if (record->tap.count) {
+                // Tap-Fall
+                if (record->event.pressed && (get_mods() & MOD_MASK_SHIFT)) {
+                    tap_code16(DE_COMM);   // Shift ist noch aktiv -> ';'
+                    return false;
+                }
+                return true;               // normale 8 (Press und Release)
+            }
+            if (record->event.pressed) tap_code16(DE_COMM);  // Hold: ',' (mit Shift ';')
+            return false;
+        
+        case KC_9_DOT:
+            if (record->tap.count) {
+                if (record->event.pressed && (get_mods() & MOD_MASK_SHIFT)) {
+                    tap_code16(DE_DOT);    // Shift ist noch aktiv -> ':'
+                    return false;
+                }
+                return true;
+            }
+            if (record->event.pressed) tap_code16(DE_DOT);
+            return false;
         case LT(_FUN, KC_F24):
             if (record->tap.count && record->event.pressed) {
                 // getappt -> Num Word an/aus togglen
@@ -207,26 +239,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 					return false;	
 				}
 			}
-			break;
-		case ALT_L:
-            if (record->event.pressed) {
-                alt_l_held = true;
-            } else {
-                alt_l_held = false;
-            }
-            break;
-
-       /* case NAV_ENTER:
-            if (record->event.pressed && alt_l_held) {
-                // Alt+Enter ausführen
-                register_mods(MOD_LALT);
-                tap_code(KC_ENTER);
-                unregister_mods(MOD_LALT);
-
-                return false; // normales Enter verhindern
-            }
-            break;*/
-				
+			break;			
 	}
 	return true;  // Continue default handling.
 }
@@ -251,10 +264,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                _______  ,DE_DRUCK ,
     RM_TOGG ,LT(_MOUSE,KC_BSPC),KC_ENTER   ,FUN_NUM_WORD,KC_ESC   ,
 											
-	KC_6     ,   KC_7     ,KC_8        ,  KC_9,KC_0         , DE_SS ,
-	DE_Z     ,   DE_U     ,DE_I        ,DE_O  ,DE_P         , DE_UE ,										
-	DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),ALT_L ,RGUI_T(DE_OE), DE_AE ,
-    DE_N     ,DE_M        ,DE_COMM     ,DE_DOT,DE_MINS      ,KC_RSFT,	 
+	KC_6     ,   KC_7     ,KC_8        ,  KC_9      ,KC_0         , DE_SS ,
+	DE_Z     ,   DE_U     ,DE_I        ,DE_O        ,DE_P         , DE_UE ,										
+	DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),LALT_T(DE_L),RGUI_T(DE_OE), DE_AE ,
+    DE_N     ,DE_M        ,DE_COMM     ,DE_DOT      ,DE_MINS      ,KC_RSFT,	 
 	 
 	KC_INSERT      , KC_DEL          ,
 	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
@@ -324,10 +337,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 								 _______,_______  ,
     _______, _______ , _______ , _______, _______ ,
 								   
-	_______, _______, _______, _______, _______ , _______,
-	DE_DOT , DE_1   , DE_2   , DE_3   , _______ , _______,
-	DE_0   , DE_4   , DE_5   , DE_6   , KC_F23  , _______,
-	DE_COMM, DE_7   , DE_8   , DE_9   , _______ , _______,
+	_______, _______, _______ , _______, _______ , _______,
+	_______, KC_1   , KC_2    , KC_3   , _______ , _______,
+	KC_0   , KC_4   , KC_5    , KC_6   , KC_F23  , _______,
+	_______, KC_7   ,KC_8_COMM,KC_9_DOT, _______ , _______,
 	
 	_______  , _______,
 	 _______ , _______, _______, _______, _______
