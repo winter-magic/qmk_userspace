@@ -1,4 +1,4 @@
-// Copyright 2025 splitkb.com (support@splitkb.com)
+ // Copyright 2025 splitkb.com (support@splitkb.com)
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include QMK_KEYBOARD_H
@@ -79,6 +79,51 @@
 #define KC_8_COMM LT(0, KC_8)
 #define KC_9_DOT LT(0, KC_9)
 
+#define FUN_NAV_WORD LT(_FUN, KC_F22) 
+
+#define SYM_BSPC LT(_SYM, KC_BSPC) 
+#define NUM_WORD_CHORD_TAPPING_TERM  20  // ms, wenn die Partnertaste schon gedrückt ist
+
+static bool nav_word_key_is_down         = false;
+static bool sym_bspc_key_is_down         = false;
+static bool swallow_nav_word_key_release = false;
+static bool swallow_sym_bspc_key_release = false;
+
+bool pre_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == FUN_NAV_WORD) nav_word_key_is_down = record->event.pressed;
+    if (keycode == SYM_BSPC) sym_bspc_key_is_down = record->event.pressed;
+    return true;   // schluckt nie etwas, merkt sich nur den Zustand
+}
+
+// Gibt true zurück, wenn das Ereignis zum Num-Word-Chord gehört und
+// verschluckt werden muss.
+static bool swallow_num_word_chord_key(uint16_t keycode, keyrecord_t *record) {
+    bool is_nav_word_key = (keycode == FUN_NAV_WORD);
+    bool is_sym_bspc_key = (keycode == SYM_BSPC);
+    if (!is_nav_word_key && !is_sym_bspc_key) return false;
+
+    bool *swallow_release     = is_nav_word_key ? &swallow_nav_word_key_release
+                                                : &swallow_sym_bspc_key_release;
+    bool partner_key_is_down  = is_nav_word_key ? sym_bspc_key_is_down
+                                                : nav_word_key_is_down;
+
+    if (record->event.pressed) {
+        bool resolved_as_hold = (record->tap.count == 0);
+        if (resolved_as_hold && partner_key_is_down) {
+            disable_nav_word();
+            enable_num_word();
+            *swallow_release = true;
+            return true;
+        }
+        return false;
+    }
+
+    if (*swallow_release) {
+        *swallow_release = false;
+        return true;
+    }
+    return false;
+}
 
 const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM =
     LAYOUT(
@@ -107,21 +152,40 @@ bool caps_word_press_user(uint16_t keycode) {
             return false;  // Deactivate Caps Word.
     }
 }
-enum combos { COMBO_CUT, COMBO_COPY, COMBO_PASTE, COMBO_NAV, COMBO_LEADER };
+enum combos { COMBO_CUT, COMBO_COPY, COMBO_PASTE, COMBO_LEADER,
+COMBO_NAV, COMBO_NAV_ZWEI, COMBO_NAV_DREI };
 
-const uint16_t PROGMEM cut[]       = {DE_Y, DE_X, COMBO_END};
-const uint16_t PROGMEM copy[]      = {DE_X, DE_C, COMBO_END};
-const uint16_t PROGMEM paste[]     = {DE_C, DE_V, COMBO_END};
-const uint16_t PROGMEM nav_combo[] = {DE_G, DE_H, COMBO_END};
-const uint16_t PROGMEM leader[]    = {DE_T, DE_Z, COMBO_END};
+const uint16_t PROGMEM cut[]            = {DE_Y, DE_X, COMBO_END};
+const uint16_t PROGMEM copy[]           = {DE_X, DE_C, COMBO_END};
+const uint16_t PROGMEM paste[]          = {DE_C, DE_V, COMBO_END};
+const uint16_t PROGMEM nav_combo[]      = {DE_G, DE_T, COMBO_END};
+const uint16_t PROGMEM nav_combo_zwei[] = {LCTL_T(DE_F), DE_R, COMBO_END};
+const uint16_t PROGMEM nav_combo_drei[] = {LCTL_T(DE_F), DE_G, COMBO_END};
+const uint16_t PROGMEM leader[]         = {DE_G, DE_H, COMBO_END};
 
 combo_t key_combos[] = {
-    [COMBO_CUT]   = COMBO(cut,   LCTL(DE_X)),
-    [COMBO_COPY]  = COMBO(copy,  LCTL(DE_C)),
-    [COMBO_PASTE] = COMBO(paste, LCTL(DE_V)),
-    [COMBO_NAV]   = COMBO_ACTION(nav_combo),
-    [COMBO_LEADER]= COMBO(leader, QK_LEAD),
+    [COMBO_CUT]      = COMBO(cut,   LCTL(DE_X)),
+    [COMBO_COPY]     = COMBO(copy,  LCTL(DE_C)),
+    [COMBO_PASTE]    = COMBO(paste, LCTL(DE_V)),
+    [COMBO_NAV]      = COMBO_ACTION(nav_combo),
+    [COMBO_NAV_ZWEI] = COMBO_ACTION(nav_combo_zwei),
+    [COMBO_NAV_DREI] = COMBO_ACTION(nav_combo_drei),
+    [COMBO_LEADER]   = COMBO(leader, QK_LEAD),
 };
+
+uint16_t get_combo_term(uint16_t combo_index, combo_t *combo) {
+    switch (combo_index) {
+        case COMBO_LEADER: return 70;   // ms, nach Gefühl anpassen
+        default:           return COMBO_TERM;
+    }
+}
+
+void process_combo_event(uint16_t combo_index, bool pressed) {
+    if ((combo_index == COMBO_NAV || combo_index == COMBO_NAV_ZWEI ||combo_index == COMBO_NAV_DREI) 
+    	&& pressed) {
+        enable_nav_word();
+    }
+}
 
 const key_override_t shift_4_j = ko_make_basic(MOD_MASK_SHIFT, KC_4, KC_J);
 const key_override_t shift_5_k = ko_make_basic(MOD_MASK_SHIFT, KC_5, KC_K);
@@ -131,19 +195,12 @@ const key_override_t *key_overrides[] = {
     &shift_5_k
 };
 
-void process_combo_event(uint16_t combo_index, bool pressed) {
-    if (combo_index == COMBO_NAV && pressed) {
-        toggle_nav_word();
-    }
-}
-
 bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case LT(_SYM,KC_BSPC):
-		case LT(_NAV,KC_ENTER):
 		case LT(_MOUSE,KC_BSPC):
-        case LT(_NUM, KC_ESC):
-        case LT(_FUN, KC_F24):
+        case FUN_NUM_WORD:
+        case FUN_NAV_WORD:
         case LT(_CMD,KC_TAB):
             return true;
         default:
@@ -154,10 +211,9 @@ bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_keycode) {
     switch (keycode) {
         case LT(_SYM, KC_BSPC):
-        case LT(_NAV, KC_ENTER):
         case LT(_MOUSE, KC_BSPC):
-        case LT(_NUM, KC_ESC):
-        case LT(_FUN, KC_F24):
+        case FUN_NUM_WORD:
+        case FUN_NAV_WORD:
         case LT(_CMD,KC_TAB):
             return 0;  // Flow Tap deaktiviert → Hold möglich
         default:
@@ -170,6 +226,10 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
         case KC_8_COMM:
         case KC_9_DOT:
             return 150;
+        case FUN_NAV_WORD:
+            return sym_bspc_key_is_down ? NUM_WORD_CHORD_TAPPING_TERM : TAPPING_TERM;
+        case SYM_BSPC:
+            return nav_word_key_is_down ? NUM_WORD_CHORD_TAPPING_TERM : TAPPING_TERM;
         default:
             return TAPPING_TERM;
     }
@@ -180,6 +240,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	if (leader_sequence_active()) {
         return true;
     }
+
+    if (keycode == EXIT) {
+            if (!record->event.pressed) {      // erst beim Loslassen beenden
+                disable_nav_word();
+                disable_num_word();
+            }
+            return false;                      // Press und Release nie an den Host
+        }
+
+    if (swallow_num_word_chord_key(keycode, record)) {
+        return false;
+    }
     
     if (!process_nav_word(keycode, record)) {
         return false;
@@ -188,7 +260,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_num_word(keycode, record)) {
         return false;
     }
-
 
    switch (keycode){
         case KC_8_COMM:
@@ -213,10 +284,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             if (record->event.pressed) tap_code16(DE_DOT);
             return false;
-        case LT(_FUN, KC_F24):
+        case FUN_NUM_WORD:
             if (record->tap.count && record->event.pressed) {
                 // getappt -> Num Word an/aus togglen
-                toggle_num_word();
+                enable_num_word();
+                return false;
+            }
+            return true;
+        case FUN_NAV_WORD:
+            if (record->tap.count && record->event.pressed) {
+                enable_nav_word();
                 return false;
             }
             return true;
@@ -250,27 +327,43 @@ bool leader_add_user(uint16_t keycode) {
 }
 
 
-
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-	
+
+	[_BASE] = LAYOUT_ELORA_FORMAT(
+	    KC_ESC ,KC_1, KC_2       ,KC_3        , KC_4             ,  KC_5   ,                                                
+	    KC_TAB ,DE_Q,DE_W        ,DE_E        , DE_R             ,  DE_T   ,                                                
+	    KC_LGUI,DE_A,LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
+	    KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
+		 
+	                                               DF(_BASE_ALT),DE_DRUCK ,
+	    RM_TOGG ,LT(_MOUSE,KC_BSPC),KC_ENTER   ,FUN_NAV_WORD,KC_ESC   ,
+												
+		KC_6     ,   KC_7     ,KC_8        ,  KC_9      ,KC_0         , DE_SS ,
+		DE_Z     ,   DE_U     ,DE_I        ,DE_O        ,DE_P         , DE_UE ,										
+		DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),LALT_T(DE_L),RGUI_T(DE_OE), DE_AE ,
+	    DE_N     ,DE_M        ,DE_COMM     ,DE_DOT      ,DE_MINS      ,KC_RSFT,	 
+		 
+		KC_INSERT      , KC_DEL ,
+		LT(_CMD,KC_TAB),SYM_BSPC,KC_SPACE,_______ ,RM_TOGG									
+	    ),
     
-    [_BASE] = LAYOUT_ELORA_FORMAT(
+    [_BASE_ALT] = LAYOUT_ELORA_FORMAT(
     KC_ESC ,KC_1, KC_2       ,KC_3        , KC_4             ,  KC_5   ,                                                
     KC_TAB ,DE_Q,DE_W        ,DE_E        , DE_R             ,  DE_T   ,                                                
     KC_LGUI,DE_A,LALT_T(DE_S),LSFT_T(DE_D),LCTL_T(DE_F)      ,  DE_G   ,                                               
     KC_LSFT,DE_Y, DE_X       ,DE_C        , DE_V             ,  DE_B   , 
 	 
-                                               _______  ,DE_DRUCK ,
-    RM_TOGG ,LT(_MOUSE,KC_BSPC),KC_ENTER   ,FUN_NUM_WORD,KC_ESC   ,
+                                            DF(_BASE),DE_DRUCK ,
+    RM_TOGG ,LT(_MOUSE,KC_BSPC),KC_ENTER   ,FUN_NUM_WORD ,KC_ESC   ,
 											
 	KC_6     ,   KC_7     ,KC_8        ,  KC_9      ,KC_0         , DE_SS ,
 	DE_Z     ,   DE_U     ,DE_I        ,DE_O        ,DE_P         , DE_UE ,										
 	DE_H     ,RCTL_T(DE_J),RSFT_T(DE_K),LALT_T(DE_L),RGUI_T(DE_OE), DE_AE ,
     DE_N     ,DE_M        ,DE_COMM     ,DE_DOT      ,DE_MINS      ,KC_RSFT,	 
 	 
-	KC_INSERT      , KC_DEL          ,
-	LT(_CMD,KC_TAB),LT(_SYM, KC_BSPC),KC_SPACE,_______ ,RM_TOGG									
+	KC_INSERT      , KC_DEL ,
+	LT(_CMD,KC_TAB),SYM_BSPC,KC_SPACE,_______ ,RM_TOGG									
     ),
     
     [_NAV] = LAYOUT_ELORA_FORMAT(
@@ -284,7 +377,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 								   
 	_______   , _______  , _______ , _______, _______, _______,							   
 	KC_HOME   , KC_PGDN  , KC_PGUP , KC_END , _______, _______,							   
-    KC_LEFT   , KC_DOWN  ,  KC_UP  , KC_RGHT, KC_F23 , _______,
+    KC_LEFT   , KC_DOWN  ,  KC_UP  , KC_RGHT,  EXIT  , _______,
 	_______   ,LCTL(DE_W), _______ , _______, _______, _______,
 	
 	_______  ,_______ ,
@@ -339,7 +432,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 								   
 	_______, _______, _______ , _______, _______ , _______,
 	_______, KC_1   , KC_2    , KC_3   , _______ , _______,
-	KC_0   , KC_4   , KC_5    , KC_6   , KC_F23  , _______,
+	KC_0   , KC_4   , KC_5    , KC_6   ,  EXIT   , _______,
 	_______, KC_7   ,KC_8_COMM,KC_9_DOT, _______ , _______,
 	
 	_______  , _______,
